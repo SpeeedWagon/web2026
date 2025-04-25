@@ -42,7 +42,7 @@ require_once 'functions/auth_token_functions.php';
 
 
 $page = $_GET['page'] ?? 'home'; // Default page is 'home'
-$allowedPages = ['home', 'about', 'login', 'logout','register']; // Whitelist allowed pages
+$allowedPages = ['home', 'about', 'login', 'logout','register', 'dashboard']; // Whitelist allowed pages
 
 // Variables for the views
 $pageTitle = 'My Website'; // Default Title
@@ -161,6 +161,10 @@ switch ($page) {
             $pageTitle = 'Regisiter';
             $contentFile = 'pages/register.php';
             break;
+    case 'dashboard':
+        $pageTitle = 'My Private List';
+        $contentFile = 'pages/dashboard.php'; // Point to the new file
+        break;
     case 'login':
         // If user is already logged in, redirect them away from login page
         if (isset($_SESSION['user_id'])) {
