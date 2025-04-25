@@ -1,10 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>PHP Docker Test</title>
-</head>
-<body>
-    <?php
+<?php
+    session_start();
     // Database connection details from docker-compose.yml environment variables
     $host = 'db'; // IMPORTANT: Use the service name defined in docker-compose.yml
     $dbname = getenv('MYSQL_DATABASE'); // Get DB name from environment
@@ -18,7 +13,6 @@
     $user = $user ?: 'my_app_user';
     $pass = $pass ?: 'your_strong_user_password';
     
-    sleep(2);
     // echo "<p>Attempting to connect to database '{$dbname}' on host '{$host}' with user '{$user}'...</p>";
     try {
         // Check if $pdo is already defined (e.g., included elsewhere)
@@ -44,7 +38,7 @@
 
 // --- Routing ---
 $page = $_GET['page'] ?? 'home'; // Default page is 'home'
-$allowedPages = ['home', 'about', 'login', 'logout']; // Whitelist allowed pages
+$allowedPages = ['home', 'about', 'login', 'logout','register']; // Whitelist allowed pages
 
 // Variables for the views
 $pageTitle = 'My Website'; // Default Title
@@ -70,27 +64,51 @@ if ($page === 'logout') {
     header('Location: index.php?page=login'); // Redirect to login page
     exit; // Stop script execution
 
-} elseif ($page === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    // --- Process Login Attempt ---
+}elseif($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST'){
+    $sql = "INSERT INTO users ( user_name, password_hash, profile_image_path) VALUES (:username, :password , :profile_path )";
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? ''; // Don't trim password input
-
+    $hashed_pass = password_hash($password,PASSWORD_DEFAULT);
     if (empty($username) || empty($password)) {
         $loginError = 'Username and Password are required.';
     } else {
         // Prepare statement to prevent SQL injection
         // Replace 'users', 'username', 'id', 'password_hash' with your actual table/column names
-        $stmt = $pdo->prepare("SELECT id, username, password_hash FROM users WHERE username = ?");
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':username' =>$username,
+                ':profile_path' =>"//awqe",
+                ':password' => $hashed_pass
+        
+        ]);
+        } catch (\PDOException $e) {
+            
+            $loginError = 'An error occurred during login. Please try again.';
+        }
+        $page = 'login';
+    }
+}
+ elseif ($page === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    // --- Process Login Attempt ---
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? ''; // Don't trim password input
+    // $_SESSION[''];
+    if (empty($username) || empty($password)) {
+        $loginError = 'Username and Password are required.';
+    } else {
+        // Prepare statement to prevent SQL injection
+        // Replace 'users', 'username', 'id', 'password_hash' with your actual table/column names
+        $stmt = $pdo->prepare("SELECT id, user_name ,  password_hash FROM users WHERE user_name = ?");
         try {
             $stmt->execute([$username]);
             $user = $stmt->fetch(); // Fetch the user record
-
             // Verify password using password_verify()
             if ($user && password_verify($password, $user['password_hash'])) {
                 // Password is correct! Login successful.
-                session_regenerate_id(true); // Regenerate session ID for security
+                // session_regenerate_id(true); // Regenerate session ID for security
                 $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
+                $_SESSION['username'] = $user['user_name'];
 
                 header('Location: index.php?page=home'); // Redirect to home or dashboard
                 exit;
@@ -114,7 +132,10 @@ switch ($page) {
         $pageTitle = 'About Us';
         $contentFile = 'pages/about.php';
         break;
-
+    case 'register':
+            $pageTitle = 'Regisiter';
+            $contentFile = 'pages/register.php';
+            break;
     case 'login':
         // If user is already logged in, redirect them away from login page
         if (isset($_SESSION['user_id'])) {
@@ -156,5 +177,11 @@ if (!empty($contentFile) && file_exists($contentFile)) {
 
 
 require_once 'templates/footer.php';
-
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PHP Docker Test</title>
+</head>
+<body>
