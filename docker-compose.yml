@@ -1,0 +1,63 @@
+# docker-compose.yml
+version: '3.8' # Specify compose file version
+
+services:
+  # PHP Service (running Apache or FPM)
+  app:
+    # Option 1: Build from a local Dockerfile (Recommended for customization)
+    build:
+      context: ./php # Look for Dockerfile in the 'php' directory
+      dockerfile: Dockerfile
+    # Option 2: Use a pre-built image directly (Simpler if no custom extensions needed)
+    # image: php:8.1-apache # Example using PHP 8.1 with Apache
+
+    container_name: my_php_app # Optional: Friendly name
+    ports:
+      - "7070:80" # Map Host Port 8080 to Container Port 80 (Apache's default)
+    volumes:
+      - ./src:/var/www/html # Mount your local 'src' directory to the container's web root
+    depends_on:
+      - db # Wait for the 'db' service to be ready before starting 'app'
+    networks:
+      - app-network # Connect to the custom network
+
+  # MySQL Service
+  db:
+    image: mysql:8.0 # Use the official MySQL 8.0 image
+    container_name: my_mysql_db # Optional: Friendly name
+    restart: always # Always restart the DB container if it stops
+    environment:
+      MYSQL_ROOT_PASSWORD: your_strong_root_password # Set root password
+      MYSQL_DATABASE: my_app_db # Create a database named 'my_app_db'
+      MYSQL_USER: my_app_user # Create a user
+      MYSQL_PASSWORD: your_strong_user_password # Set the user's password
+    volumes:
+      - db_data:/var/lib/mysql # Persist MySQL data in a named volume
+    networks:
+      - app-network # Connect to the custom network
+    # Optional: Expose MySQL port to host if you need direct access (e.g., with Sequel Pro/DBeaver)
+    # ports:
+    #   - "3307:3306" # Map Host Port 3307 to Container Port 3306
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin # Use the official phpMyAdmin image
+    container_name: my_phpmyadmin # Optional: Friendly name
+    restart: always
+    ports:
+      - "8081:80" # Map Host Port 8081 to Container Port 80 (phpMyAdmin's default)
+                  # Choose a host port that isn't already in use (7070 is used by app)
+    environment:
+      PMA_HOST: db        # Tell phpMyAdmin the hostname is 'db'
+      PMA_PORT: 3306      # Tell phpMyAdmin the port is 3306
+    networks:
+      - app-network    # Connect phpMyAdmin to the same network
+    depends_on:         # Good practice to wait for db
+      - db
+    # --- END OF ADDED LINES ---
+# Define the custom network
+networks:
+  app-network:
+    driver: bridge # Default network driver
+
+# Define the named volume for MySQL data persistence
+volumes:
+  db_data:
