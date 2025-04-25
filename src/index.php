@@ -1,5 +1,7 @@
-<?php
+<?php 
     session_start();
+    
+  
     // Database connection details from docker-compose.yml environment variables
     $host = 'db'; // IMPORTANT: Use the service name defined in docker-compose.yml
     $dbname = getenv('MYSQL_DATABASE'); // Get DB name from environment
@@ -35,8 +37,10 @@
          exit; // Or handle gracefully depending on your application logic
     }
 
-
+require_once 'functions/auth_token_functions.php';
 // --- Routing ---
+
+
 $page = $_GET['page'] ?? 'home'; // Default page is 'home'
 $allowedPages = ['home', 'about', 'login', 'logout','register']; // Whitelist allowed pages
 
@@ -47,10 +51,20 @@ $loginError = '';          // To display login errors on the login page
 
 // --- Handle Specific Actions (Logout, Login POST) ---
 
+if (!isset($_SESSION['user_id'])) {
+    loginWithRememberMeCookie($pdo);
+    
+}
 if ($page === 'logout') {
     // Clear session data
     session_unset();    // Unset $_SESSION variable for the run-time
     session_destroy();  // Destroy session data in storage
+    $userId = $_SESSION['user_id'] ?? null;
+    if ($userId) {
+        clearUserTokens($pdo, $userId);
+    }
+    clearRememberMeCookie();
+    $_SESSION = [];
 
     // Optional: Clear the session cookie
     if (ini_get("session.use_cookies")) {
@@ -60,6 +74,7 @@ if ($page === 'logout') {
             $params["secure"], $params["httponly"]
         );
     }
+    // session_destroy();
 
     header('Location: index.php?page=login'); // Redirect to login page
     exit; // Stop script execution
@@ -93,6 +108,7 @@ if ($page === 'logout') {
     // --- Process Login Attempt ---
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? ''; // Don't trim password input
+    $rememberMe = isset($_POST['remember_me']); // Check if the checkbox was checked
     // $_SESSION[''];
     if (empty($username) || empty($password)) {
         $loginError = 'Username and Password are required.';
@@ -109,7 +125,15 @@ if ($page === 'logout') {
                 // session_regenerate_id(true); // Regenerate session ID for security
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['user_name'];
-
+                if ($rememberMe) {
+                    // Create and store a new token, also sets the cookie
+                    createRememberMeToken($pdo, $user['id']);
+                } else {
+                    // If not checked, ensure any old tokens for this user are removed
+                    // and any existing remember me cookie is cleared.
+                    clearUserTokens($pdo, $user['id']);
+                    clearRememberMeCookie();
+                }
                 header('Location: index.php?page=home'); // Redirect to home or dashboard
                 exit;
             } else {
@@ -121,6 +145,7 @@ if ($page === 'logout') {
             $loginError = 'An error occurred during login. Please try again.';
         }
     }
+    
     // If login failed, we continue below to re-display the login page with the error.
     // Ensure $page is still 'login' so the correct content is loaded.
     $page = 'login'; // Explicitly keep page as login
