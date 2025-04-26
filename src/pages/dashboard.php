@@ -1,81 +1,69 @@
 <?php
-// src/pages/my_comments.php
-
-// Start session if not already started (best practice)
+// Ensure session is started (redundant if done in main index.php, but safe)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// --- Authentication Check ---
-// Must happen before any processing or output
+// --- Authentication Check --- (Should ideally be done *before* including the file in index.php)
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['login_error'] = 'Please log in to manage your comments.';
+    // Consider redirecting from the main index.php logic instead of here
     // header('Location: index.php?page=login');
+    echo '<div class="alert alert-danger">Access denied. Please log in.</div>'; // Fallback message
     exit;
 }
 
-// We need the $pdo object. Assume index.php makes it available,
-// or require your connection file here.
-// require_once __DIR__ . '/../db_connection.php'; // If needed
+// Assume $pdo is available
 
-// --- Initialize variables for feedback ---
+// --- Initialize variables ---
 $addCommentError = '';
 $deleteCommentError = '';
 $statusMessage = '';
+$fetchDbError = null; // For fetch errors
+$userComments = [];
+$currentUserId = $_SESSION['user_id'];
 
-// --- Check for Status Messages from Redirects ---
+// --- Status Messages from Redirects ---
 if (isset($_GET['status'])) {
-    if ($_GET['status'] === 'added') {
-        $statusMessage = "Comment added successfully!";
-    } elseif ($_GET['status'] === 'deleted') {
-        $statusMessage = "Comment deleted successfully!";
-    } elseif ($_GET['status'] === 'delete_error') {
-        $deleteCommentError = "Could not delete comment. Please try again.";
-    } elseif ($_GET['status'] === 'auth_error') {
-        $deleteCommentError = "You are not authorized to delete that comment.";
-    }
-     elseif ($_GET['status'] === 'add_error') {
-        $addCommentError = "Could not add comment. Please try again.";
+    // Simplified status handling
+    switch ($_GET['status']) {
+        case 'added': $statusMessage = "Comment added successfully!"; break;
+        case 'deleted': $statusMessage = "Comment deleted successfully!"; break;
+        case 'delete_error': $deleteCommentError = "Could not delete comment. Please try again."; break;
+        case 'auth_error': $deleteCommentError = "You are not authorized to delete that comment."; break;
+        case 'add_error': $addCommentError = "Could not add comment. Please try again."; break;
+        case 'not_found': $deleteCommentError = "Comment not found."; break;
+        case 'delete_failed': $deleteCommentError = "Could not delete comment (it might already be gone)."; break;
+
     }
 }
 
 
 // --- Process POST Requests (Add/Delete) ---
-// This MUST happen before fetching comments for display
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $currentUserId = $_SESSION['user_id']; // Get user ID again for processing
 
     // --- Handle ADD Comment ---
     if (isset($_POST['action']) && $_POST['action'] === 'add_comment') {
         $content = trim($_POST['comment_content'] ?? '');
-
         if (empty($content)) {
             $addCommentError = "Comment content cannot be empty.";
         } else {
-            // Validation passed, proceed with insert
             try {
                 $sql = "INSERT INTO comments (user_id, content) VALUES (:user_id, :content)";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    ':user_id' => $currentUserId,
-                    ':content' => $content
-                ]);
-
-                // Redirect using PRG pattern on success
+                $stmt->execute([':user_id' => $currentUserId, ':content' => $content]);
+                // Use header redirect for PRG pattern - JS redirect can be less reliable
+                // header('Location: index.php?page=dashboard&status=added');
                 echo "<script>
-                        setTimeout(function() {
-             window.location.href = 'index.php?page=dashboard'; // Reload specific URL
-         }, 1); // Reload after 1.5 seconds (1500 milliseconds)
-       </script>";
-                
-
+                         setTimeout(function() {
+                window.location.href = 'index.php?page=dashboard'; // Reload specific URL
+                }, 1); // Reload after 1.5 seconds (1500 milliseconds)
+                 </script>";
+                exit;
             } catch (PDOException $e) {
-                $addCommentError = "Database error adding comment.";
+                $addCommentError = "Database error adding comment."; // Show error on current page
                 error_log("Error adding comment for user {$currentUserId}: " . $e->getMessage());
-                // Let the script continue to display the page with the error
-                 // Optional: Redirect with error status
-                // header('Location: index.php?page=my_comments');
-                // exit;
+                // header('Location: index.php?page=dashboard&status=add_error'); exit; // Alt: Redirect with error
             }
         }
     }
@@ -86,55 +74,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$commentIdToDelete || $commentIdToDelete <= 0) {
             $deleteCommentError = "Invalid comment ID provided.";
+             // header('Location: index.php?page=dashboard&status=delete_error'); exit; // Alt: Redirect
         } else {
             try {
-                // *** AUTHORIZATION CHECK: Verify comment belongs to the user ***
                 $authSql = "SELECT user_id FROM comments WHERE id = :comment_id";
                 $authStmt = $pdo->prepare($authSql);
                 $authStmt->execute([':comment_id' => $commentIdToDelete]);
-                $commentOwner = $authStmt->fetchColumn(); // Fetch just the user_id column
+                $commentOwner = $authStmt->fetchColumn();
 
                 if ($commentOwner === false) {
-                    // Comment doesn't exist
-                     $deleteCommentError = "Comment not found.";
-                     // Optional Redirect: header('Location: index.php?page=my_comments&status=not_found'); exit;
+                    //  header('Location: index.php?page=dashboard&status=not_found'); exit;
+                    echo "<script>
+                    setTimeout(function() {
+           window.location.href = 'index.php?page=dashboard'; // Reload specific URL
+           }, 1); // Reload after 1.5 seconds (1500 milliseconds)
+            </script>";
                 } elseif ($commentOwner != $currentUserId) {
-                    // Authorization failed - comment belongs to someone else!
-                    error_log("Authorization failed: User {$currentUserId} tried to delete comment {$commentIdToDelete} owned by {$commentOwner}");
-                    // Redirect with generic error (don't reveal specific auth failure details)
-                    // header('Location: index.php?page=dashboard');
-                    exit;
+                     error_log("Auth failed: User {$currentUserId} deleting comment {$commentIdToDelete} owned by {$commentOwner}");
+                    //  header('Location: index.php?page=dashboard&status=auth_error'); // Redirect on auth failure
+                    echo "<script>
+                    setTimeout(function() {
+           window.location.href = 'index.php?page=dashboard'; // Reload specific URL
+           }, 1); // Reload after 1.5 seconds (1500 milliseconds)
+            </script>";
+                     exit;
                 } else {
-                    // --- Authorization OK - Proceed with Deletion ---
-                    $deleteSql = "DELETE FROM comments WHERE id = :comment_id AND user_id = :user_id"; // Double check user_id
+                    $deleteSql = "DELETE FROM comments WHERE id = :comment_id AND user_id = :user_id";
                     $deleteStmt = $pdo->prepare($deleteSql);
-                    $deleteStmt->execute([
-                        ':comment_id' => $commentIdToDelete,
-                        ':user_id'    => $currentUserId
-                    ]);
+                    $deleteStmt->execute([':comment_id' => $commentIdToDelete,':user_id' => $currentUserId]);
 
-                    // Check if deletion was successful (optional but good)
                     if ($deleteStmt->rowCount() > 0) {
-                         // Redirect using PRG pattern on success
-                         echo "<script>
-                         setTimeout(function() {
-              window.location.href = 'index.php?page=dashboard'; // Reload specific URL
-          }, 1); // Reload after 1.5 seconds (1500 milliseconds)
-        </script>";
-                        exit;
+                        //  header('Location: index.php?page=dashboard&status=deleted');
+                        echo "<script>
+                        setTimeout(function() {
+               window.location.href = 'index.php?page=dashboard'; // Reload specific URL
+               }, 1); // Reload after 1.5 seconds (1500 milliseconds)
+                </script>";
+                         exit;
                     } else {
-                        // Row count was 0 - maybe already deleted or race condition?
-                        $deleteCommentError = "Could not delete comment (it might already be gone).";
-                         // Optional Redirect: header('Location: index.php?page=my_comments&status=delete_failed'); exit;
+                         header('Location: index.php?page=dashboard&status=delete_failed');
+                         exit;
                     }
                 }
-
             } catch (PDOException $e) {
-                $deleteCommentError = "Database error deleting comment.";
                 error_log("Error deleting comment {$commentIdToDelete} for user {$currentUserId}: " . $e->getMessage());
-                // Redirect with generic error status
-                //  header('Location: index.php?page=dashboard&status=delete_error');
-                 exit;
+                // header('Location: index.php?page=dashboard&status=delete_error');
+                echo "<script>
+                setTimeout(function() {
+       window.location.href = 'index.php?page=dashboard'; // Reload specific URL
+       }, 1); // Reload after 1.5 seconds (1500 milliseconds)
+        </script>";
+                exit;
             }
         }
     }
@@ -142,113 +132,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 // --- Fetch User's Comments for Display ---
-// This runs *after* potential adds/deletes and redirects
-$currentUserId = $_SESSION['user_id']; // Re-affirm user ID
-$userComments = [];
-$fetchDbError = null; // Use a different variable name for fetch errors
-
 try {
-    $sql = "SELECT id, content, created_at
-            FROM comments
-            WHERE user_id = :user_id
-            ORDER BY created_at DESC";
+    $sql = "SELECT id, content, created_at FROM comments WHERE user_id = :user_id ORDER BY created_at DESC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':user_id' => $currentUserId]);
     $userComments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $fetchDbError = "Could not retrieve your comments. Please try again later.";
-    error_log("Database error fetching comments for user {$currentUserId}: " . $e->getMessage());
+    error_log("DB error fetching comments for user {$currentUserId}: " . $e->getMessage());
 }
 
 ?>
 
-<!-- Page Content Starts (No <html>, <head>, <body>) -->
-<h1>Manage My Comments</h1>
+<!-- Page Content Starts -->
+<h1 class="text-primary mb-4">Manage My Comments</h1>
 
 <!-- Display Status/Feedback Messages -->
 <?php if ($statusMessage): ?>
-    <p class="status-message" style="color: green; background-color: #e6ffe6; border: 1px solid green; padding: 10px; border-radius: 4px;">
-        <?php echo htmlspecialchars($statusMessage); ?>
-    </p>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($statusMessage); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <?php endif; ?>
-<?php if ($deleteCommentError): // Display general delete errors here ?>
-    <p class="error-message" style="color: red; background-color: #ffe6e6; border: 1px solid red; padding: 10px; border-radius: 4px;">
-        <?php echo htmlspecialchars($deleteCommentError); ?>
-    </p>
+<?php if ($deleteCommentError): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= htmlspecialchars($deleteCommentError); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 <?php endif; ?>
 
 
-<!-- Add Comment Form -->
-<div class="add-comment-form">
-    <h2>Add a New Comment</h2>
-    <?php if ($addCommentError): ?>
-        <p class="error-message" style="color: red;">
-            <?php echo htmlspecialchars($addCommentError); ?>
-        </p>
-    <?php endif; ?>
-    <form action="index.php?page=dashboard" method="POST">
-        <input type="hidden" name="action" value="add_comment">
-        <div>
-            <label for="comment_content">Your Comment:</label><br>
-            <textarea id="comment_content" name="comment_content" rows="4" cols="50" required></textarea>
-        </div>
-        <div>
-            <button type="submit">Add Comment</button>
-        </div>
-    </form>
+<!-- Add Comment Form Card -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+      <h2 class="h5 mb-0">Add a New Comment</h2>
+    </div>
+    <div class="card-body">
+        <?php if ($addCommentError): ?>
+            <div class="alert alert-danger" role="alert">
+                <?= htmlspecialchars($addCommentError); ?>
+            </div>
+        <?php endif; ?>
+        <form action="index.php?page=dashboard" method="POST">
+            <input type="hidden" name="action" value="add_comment">
+            <div class="mb-3">
+                <label for="comment_content" class="form-label">Your Comment:</label>
+                <textarea class="form-control" id="comment_content" name="comment_content" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill me-1" viewBox="0 0 16 16">
+                  <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
+                </svg>
+                Add Comment
+            </button>
+        </form>
+    </div>
 </div>
 
-<hr style="margin: 20px 0;">
 
-<!-- Display Existing Comments -->
-<div class="user-comments-section">
-    <h2>My Existing Comments</h2>
-
-    <?php if ($fetchDbError): // Display error if fetching failed ?>
-        <p class="error-message" style="color: red;">
-            <?php echo htmlspecialchars($fetchDbError); ?>
-        </p>
-    <?php elseif (!empty($userComments)): // Display list if comments exist ?>
-        <ul class="comment-list" style="list-style: none; padding: 0;">
-            <?php foreach ($userComments as $comment): ?>
-                <li class="comment-item" style="border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;" id="comment-<?php echo htmlspecialchars($comment['id']); ?>">
-                    <div class="comment-content" style="margin-bottom: 5px;">
-                        <?php echo nl2br(htmlspecialchars($comment['content'], ENT_QUOTES, 'UTF-8')); ?>
-                    </div>
-                    <div class="comment-meta" style="font-size: 0.85em; color: #555;">
-                        Posted: <?php echo date('M d, Y H:i', strtotime($comment['created_at'])); ?>
-
+<!-- Display Existing Comments Card -->
+<div class="card shadow-sm">
+     <div class="card-header">
+       <h2 class="h5 mb-0">My Existing Comments</h2>
+     </div>
+    <div class="card-body">
+        <?php if ($fetchDbError): ?>
+            <div class="alert alert-warning" role="alert">
+                <?= htmlspecialchars($fetchDbError); ?>
+            </div>
+        <?php elseif (!empty($userComments)): ?>
+            <ul class="list-group list-group-flush">
+                <?php foreach ($userComments as $comment): ?>
+                    <li class="list-group-item d-flex justify-content-between align-items-start" id="comment-<?php echo htmlspecialchars($comment['id']); ?>">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold"><?php echo nl2br(htmlspecialchars($comment['content'], ENT_QUOTES, 'UTF-8')); ?></div>
+                            <small class="text-muted">
+                                Posted: <?php echo date('M d, Y H:i', strtotime($comment['created_at'])); ?>
+                             </small>
+                        </div>
                         <!-- Delete Button Form -->
-                        <form action="index.php?page=dashboard" method="POST" style="display: inline; margin-left: 15px;">
+                        <form action="index.php?page=dashboard" method="POST" class="ms-2">
                             <input type="hidden" name="action" value="delete_comment">
                             <input type="hidden" name="comment_id" value="<?php echo htmlspecialchars($comment['id']); ?>">
-                            <button type="submit" class="delete-button" onclick="return confirm('Are you sure you want to delete this comment?');" style="color: red; background: none; border: none; padding: 0; font-size: 0.85em; cursor: pointer;">
-                                Delete
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete comment" onclick="return confirm('Are you sure you want to delete this comment?');">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">
+                                    <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
+                                </svg>
                             </button>
                         </form>
-                    </div>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    <?php else: // No error, but no comments found ?>
-        <p>You haven't written any comments yet.</p>
-    <?php endif; ?>
-
-</div>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php else: ?>
+            <p class="text-muted">You haven't written any comments yet.</p>
+        <?php endif; ?>
+    </div> <!-- /card-body -->
+</div> <!-- /card -->
 <!-- End Page Content -->
-
-<!-- Optional basic styling (better in a separate CSS file) -->
-<style>
-    .user-comments-section { margin-top: 20px; }
-    .comment-list { list-style: none; padding: 0; }
-    .comment-item {
-        border: 1px solid #ddd;
-        padding: 10px 15px;
-        margin-bottom: 10px;
-        background-color: #f9f9f9;
-        border-radius: 4px;
-    }
-    .comment-content { margin-bottom: 5px; }
-    .comment-meta { font-size: 0.85em; color: #555; }
-    .error { color: #D8000C; background-color: #FFD2D2; padding: 10px; border: 1px solid #D8000C; border-radius: 3px; margin-bottom: 15px; }
-</style>
