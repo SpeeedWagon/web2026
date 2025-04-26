@@ -85,6 +85,14 @@ elseif($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST'){
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? ''; // Don't trim password input
     $hashed_pass = password_hash($password,PASSWORD_DEFAULT);
+    $uploadDirectory = 'uploads/avatars/';
+    $temporaryPath = $_FILES['fileToUpload']['tmp_name'];
+    
+    $originalFileName = basename($_FILES['fileToUpload']['name']);
+    echo $originalFileName;
+    $destinationPath = $uploadDirectory . $originalFileName;
+    move_uploaded_file($temporaryPath, $destinationPath);
+    
     if (empty($username) || empty($password)) {
         $loginError = 'Username and Password are required.';
     } else {
@@ -94,7 +102,7 @@ elseif($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST'){
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':username' =>$username,
-                ':profile_path' =>"//awqe",
+                ':profile_path' =>"uploads/avatars/$originalFileName",
                 ':password' => $hashed_pass
         
         ]);
