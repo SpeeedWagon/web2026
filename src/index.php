@@ -87,7 +87,7 @@ elseif($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST'){
     $hashed_pass = password_hash($password,PASSWORD_DEFAULT);
     $uploadDirectory = 'uploads/avatars/';
     $temporaryPath = $_FILES['fileToUpload']['tmp_name'];
-    
+   
     $originalFileName = basename($_FILES['fileToUpload']['name']);
     echo $originalFileName;
     $destinationPath = $uploadDirectory . $originalFileName;
@@ -119,6 +119,7 @@ elseif($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST'){
     $password = $_POST['password'] ?? ''; // Don't trim password input
     $rememberMe = isset($_POST['remember_me']); // Check if the checkbox was checked
     // $_SESSION[''];
+    $_SESSION['robot'] = true;
     if (empty($username) || empty($password)) {
         $loginError = 'Username and Password are required.';
     } else {
@@ -221,6 +222,7 @@ require_once 'templates/footer.php';
 <html>
 <head>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <title>PHP Docker Test</title>
+
+<title>PHP Docker Test</title>
 </head>
 <body>
