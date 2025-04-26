@@ -94,3 +94,191 @@
 #playButton {
 	min-width: 250px;
 }
+
+* {
+    box-sizing: border-box;
+  }
+  
+  *:before {
+    box-sizing: border-box;
+  }
+  
+  *:after {
+    box-sizing: border-box;
+  }
+  
+  html {
+    /* No styles defined in the original snippet for html */
+  }
+  
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .audio-player {
+    position: relative;
+    width: 100%;
+    height: 0;
+    text-align: center;
+    padding-bottom: 100%; /* This creates the square aspect ratio */
+    background-color: #7726e4; /* $color--purple */
+  }
+  
+  .audio-player video {
+    opacity: 0;
+    transition: opacity 300ms;
+    will-change: opacity;
+  }
+  
+  /* Hover/Focus/Playing states affecting child elements */
+  .audio-player:focus .audio-player__cover,
+  .audio-player:hover .audio-player__cover,
+  .audio-player.is-playing .audio-player__cover {
+    opacity: 0.35;
+  }
+  
+  .audio-player:focus .audio-player__title,
+  .audio-player:hover .audio-player__title,
+  .audio-player.is-playing .audio-player__title {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .audio-player:focus .audio-player__control-icon,
+  .audio-player:hover .audio-player__control-icon,
+  .audio-player.is-playing .audio-player__control-icon {
+    transform: scale(1.15);
+  }
+  
+  /* Playing state specific overrides */
+  .audio-player.is-playing .audio-player__cover {
+    opacity: 0;
+  }
+  
+  .audio-player.is-playing video {
+    opacity: 1;
+  }
+  
+  .audio-player.is-playing .audio-player__control-icon::before {
+    transform: translateY(0);
+  }
+  
+  .audio-player.is-playing .audio-player__control-icon::after {
+    transform: translateY(50px);
+  }
+  
+  /* Cover Image */
+  .audio-player__cover {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transition: opacity 350ms;
+    will-change: opacity;
+  }
+  
+  /* Title */
+  .audio-player__title {
+    position: absolute;
+    color: #fff; /* $color--white */
+    font-size: 22px;
+    font-weight: 500;
+    left: 10px;
+    right: 10px;
+    bottom: 0;
+    top: 50%;
+    padding-top: 50px;
+    transform: translateY(-5%);
+    z-index: 10;
+    opacity: 0;
+    transition: all 300ms;
+    will-change: transform, opacity;
+  }
+  
+  /* Control Button (invisible overlay) */
+  .audio-player__control {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 20;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+  
+  .audio-player__control:focus {
+    outline: none;
+  }
+  
+  /* Control Icon (visual circle) */
+  .audio-player__control-icon {
+    position: absolute;
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: 3px solid #fff; /* $color--white */
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: auto;
+    overflow: hidden;
+    transition: all 250ms ease-out;
+    transform: scale(1);
+    will-change: transform;
+  }
+  
+  /* Common styles for pseudo-elements (play/pause shapes) */
+  .audio-player__control-icon::after,
+  .audio-player__control-icon::before {
+    transition: all 200ms;
+    will-change: transform;
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    margin: auto;
+  }
+  
+  /* Play Icon (Triangle) */
+  .audio-player__control-icon::after {
+    left: 5px;
+    width: 0;
+    height: 0;
+    border-top: 16px solid transparent;
+    border-bottom: 16px solid transparent;
+    border-left: 20px solid #fff; /* $color--white */
+    transform: translateY(0);
+  }
+  
+  /* Pause Icon (Parallel Bars) */
+  .audio-player__control-icon::before {
+    width: 15px;
+    height: 30px;
+    border-right: 6px solid #fff; /* $color--white */
+    border-left: 6px solid #fff; /* $color--white */
+    transform: translateY(-50px); /* Initially hidden above */
+  }
+  
+  /* Container for multiple players */
+  .audio-players {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+  
+  .audio-players li {
+    display: inline-block;
+    vertical-align: top;
+    max-width: 300px;
+    margin: 20px;
+  }
