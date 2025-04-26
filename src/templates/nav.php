@@ -1,5 +1,3 @@
-
-
 <!-- Bootstrap Navbar - Non-Responsive -->
 <!-- Classes used:
      navbar: Basic navbar styling
@@ -13,11 +11,11 @@
     <!-- Navigation Links - Use flex-row to force inline layout -->
     <ul class="navbar-nav flex-row ms-auto align-items-center"> <!-- ms-auto pushes nav items to the right -->
 
-       
-        <?php if(isset($_SESSION['user_id'])): ?>
-            <?php 
-            $name_id = $_SESSION['user_id'] ??'';
-            $sql = "SELECT profile_image_path FROM users WHERE id=$name_id"; 
+
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <?php
+            $name_id = $_SESSION['user_id'] ?? '';
+            $sql = "SELECT profile_image_path FROM users WHERE id=$name_id";
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
             $info = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -25,16 +23,18 @@
             ?>
 
             <li class="nav-item">
-                 <span class="navbar-text-custom">Welcome, <?php echo $_SESSION['username'] ; ?>!</span> <!-- Non-link text -->
+                <span class="navbar-text-custom">Welcome, <?php echo $_SESSION['username']; ?>!</span>
+                <!-- Non-link text -->
             </li>
             <li>
-            <img class="avatar" src="<?= htmlspecialchars($info["profile_image_path"]) ?>" alt="<?= htmlspecialchars($altText) ?>" />
+                <img class="avatar" src="<?= htmlspecialchars($info["profile_image_path"]) ?>"
+                    alt="<?= htmlspecialchars($altText) ?>" />
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="index.php?page=home">Home</a>
-             </li>
+                <a class="nav-link" href="index.php?page=home">Home</a>
+            </li>
             <li class="nav-item">
-            <a class="nav-link" href="index.php?page=about">About</a>
+                <a class="nav-link" href="index.php?page=about">About</a>
             </li>
 
             <li class="nav-item">
@@ -46,9 +46,9 @@
 
         <?php else: // Display if user is logged out ?>
             <a class="nav-link" href="index.php?page=home">Home</a>
-             </li>
+            </li>
             <li class="nav-item">
-            <a class="nav-link" href="index.php?page=about">About</a>
+                <a class="nav-link" href="index.php?page=about">About</a>
             </li>
 
             <li class="nav-item">

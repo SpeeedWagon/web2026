@@ -1,92 +1,96 @@
 .avatar {
-    width: 40px;           /* Set desired small width */
-    height: 40px;          /* Set desired small height (same as width for circle) */
-    border-radius: 50%;    /* This makes the image circular */
-    object-fit: cover;     /* Scales the image nicely within the circle, cropping if needed */
-    vertical-align: middle;/* Optional: Aligns nicely if placed next to text */
-    border: 1px solid #ccc; /* Optional: Adds a subtle border */
-    background-color: #f0f0f0; /* Optional: Background for broken images */
+	width: 40px; /* Set desired small width */
+	height: 40px; /* Set desired small height (same as width for circle) */
+	border-radius: 50%; /* This makes the image circular */
+	object-fit: cover; /* Scales the image nicely within the circle, cropping if needed */
+	vertical-align: middle; /* Optional: Aligns nicely if placed next to text */
+	border: 1px solid #ccc; /* Optional: Adds a subtle border */
+	background-color: #f0f0f0; /* Optional: Background for broken images */
 }
 
 /* You can define other sizes too */
 .avatar-large {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    vertical-align: middle;
+	width: 80px;
+	height: 80px;
+	border-radius: 50%;
+	object-fit: cover;
+	vertical-align: middle;
 }
 .navbar-avatar {
-width: 30px; /* Adjust size as needed */
-height: 30px;
-border-radius: 50%; /* Make it circular */
-object-fit: cover; /* Scale image nicely */
-vertical-align: middle;
-border: 1px solid rgba(255, 255, 255, 0.6); /* Optional subtle border for dark backgrounds */
+	width: 30px; /* Adjust size as needed */
+	height: 30px;
+	border-radius: 50%; /* Make it circular */
+	object-fit: cover; /* Scale image nicely */
+	vertical-align: middle;
+	border: 1px solid rgba(255, 255, 255, 0.6); /* Optional subtle border for dark backgrounds */
 }
 /* Ensure items align vertically in the navbar */
 .navbar .nav-item {
-display: flex;
-align-items: center;
+	display: flex;
+	align-items: center;
 }
 /* Add some spacing between nav items */
 .navbar-nav > .nav-item {
-margin-left: 0.5rem;
-margin-right: 0.5rem;
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
 }
 .navbar-nav > .nav-item:first-child {
-margin-left: 0;
+	margin-left: 0;
 }
 .navbar-nav > .nav-item:last-child {
-margin-right: 0;
+	margin-right: 0;
 }
 /* Style for the non-link welcome text */
 .navbar-text-custom {
-color: rgba(255, 255, 255, 0.85); /* Lighter text color for dark navbar */
-padding-top: 0.5rem; /* Align with nav-link padding */
-padding-bottom: 0.5rem; /* Align with nav-link padding */
+	color: rgba(255, 255, 255, 0.85); /* Lighter text color for dark navbar */
+	padding-top: 0.5rem; /* Align with nav-link padding */
+	padding-bottom: 0.5rem; /* Align with nav-link padding */
 }
 .board {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
-    grid-gap: 8px; /* Gap between cells */
-    max-width: 300px; /* Limit board width */
-    margin: 20px auto; /* Center the board */
+	display: grid;
+	grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+	grid-gap: 8px; /* Gap between cells */
+	max-width: 300px; /* Limit board width */
+	margin: 20px auto; /* Center the board */
 }
 .cell {
-    width: 100%;
-    padding-top: 100%; /* Creates square aspect ratio (padding-top trick) */
-    position: relative; /* For absolute positioning of content */
-    background-color: #e9ecef;
-    border: none; /* Use grid-gap instead of borders */
-    border-radius: 5px;
-    font-size: 2.5rem; /* Adjust font size for X/O */
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    display: flex; /* Center content inside */
-    justify-content: center;
-    align-items: center;
+	width: 100%;
+	padding-top: 100%; /* Creates square aspect ratio (padding-top trick) */
+	position: relative; /* For absolute positioning of content */
+	background-color: #e9ecef;
+	border: none; /* Use grid-gap instead of borders */
+	border-radius: 5px;
+	font-size: 2.5rem; /* Adjust font size for X/O */
+	font-weight: bold;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	display: flex; /* Center content inside */
+	justify-content: center;
+	align-items: center;
 }
 .cell:hover:not(:disabled) {
-    background-color: #dee2e6;
+	background-color: #dee2e6;
 }
 .cell:disabled {
-    cursor: not-allowed;
+	cursor: not-allowed;
 }
 /* Position the X or O inside the cell */
 .cell span {
-     position: absolute;
-     top: 50%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     line-height: 1; /* Prevent extra spacing */
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	line-height: 1; /* Prevent extra spacing */
 }
 
-.cell.cell-x span { color: #0d6efd; } /* Bootstrap primary blue */
-.cell.cell-o span { color: #dc3545; } /* Bootstrap danger red */
+.cell.cell-x span {
+	color: #0d6efd;
+} /* Bootstrap primary blue */
+.cell.cell-o span {
+	color: #dc3545;
+} /* Bootstrap danger red */
 
- /* Ensure button doesn't stretch excessively */
+/* Ensure button doesn't stretch excessively */
 #playButton {
-    min-width: 250px;
+	min-width: 250px;
 }

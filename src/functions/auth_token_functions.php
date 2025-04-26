@@ -7,7 +7,8 @@ define('REMEMBER_ME_EXPIRY_SECONDS', 86400 * 30); // 30 days expiry
 /**
  * Creates a new persistent login token, stores it in DB, and sets the cookie.
  */
-function createRememberMeToken(PDO $pdo, int $userId): void {
+function createRememberMeToken(PDO $pdo, int $userId): void
+{
     // Clear any old tokens for this user first for hygiene
     clearUserTokens($pdo, $userId);
 
@@ -43,7 +44,8 @@ function createRememberMeToken(PDO $pdo, int $userId): void {
  * Validates the remember me cookie, logs in user if valid, and cycles the token.
  * Returns true if login via cookie was successful, false otherwise.
  */
-function loginWithRememberMeCookie(PDO $pdo): bool {
+function loginWithRememberMeCookie(PDO $pdo): bool
+{
     error_log("DEBUG: loginWithRememberMeCookie START"); // Keep for debugging if needed
 
     // Check if cookie exists
@@ -94,7 +96,7 @@ function loginWithRememberMeCookie(PDO $pdo): bool {
                     $userStmt = $pdo->prepare("SELECT user_name FROM users WHERE id = ?");
                     $userStmt->execute([$userId]);
                     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
-                  
+
                     if ($user && isset($user['user_name'])) {
                         $username = $user['user_name']; // Successfully fetched username
                         error_log("DEBUG: Fetched username '{$username}' for user_id {$userId}");
@@ -135,7 +137,7 @@ function loginWithRememberMeCookie(PDO $pdo): bool {
 
                 // Set the new cookie with the same selector but new validator
                 $newCookieValue = $selector . ':' . $newValidator;
-                 setcookie(
+                setcookie(
                     REMEMBER_ME_COOKIE_NAME,
                     $newCookieValue,
                     time() + REMEMBER_ME_EXPIRY_SECONDS, // Use same expiry duration
@@ -161,7 +163,7 @@ function loginWithRememberMeCookie(PDO $pdo): bool {
             }
         } else {
             // Selector not found or token expired
-             error_log("DEBUG: DB Token NOT Found or expired for selector {$selector}. Clearing cookie.");
+            error_log("DEBUG: DB Token NOT Found or expired for selector {$selector}. Clearing cookie.");
             clearRememberMeCookie(); // Clear the invalid/expired cookie
             error_log("DEBUG: loginWithRememberMeCookie RETURNING FALSE (token not found/expired)");
             return false;
@@ -177,7 +179,8 @@ function loginWithRememberMeCookie(PDO $pdo): bool {
 /**
  * Clears the remember me cookie by setting its expiry in the past.
  */
-function clearRememberMeCookie(): void {
+function clearRememberMeCookie(): void
+{
     // Check if cookie exists before trying to unset/delete
     if (isset($_COOKIE[REMEMBER_ME_COOKIE_NAME])) {
         setcookie(
@@ -198,7 +201,8 @@ function clearRememberMeCookie(): void {
  * Deletes all persistent login tokens for a specific user from the database.
  * Useful on logout or if "Remember Me" is unchecked during login.
  */
-function clearUserTokens(PDO $pdo, int $userId): void {
+function clearUserTokens(PDO $pdo, int $userId): void
+{
     try {
         $stmt = $pdo->prepare("DELETE FROM persistent_logins WHERE user_id = ?");
         $stmt->execute([$userId]);
