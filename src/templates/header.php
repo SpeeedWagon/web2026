@@ -1,5 +1,4 @@
 <?php
-// session_start() is called in index.php BEFORE this is included
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,7 +14,6 @@
 
 <body>
     <header>
-        <h1>My Awesome Website</h1>
-        <?php require_once __DIR__ . '/nav.php'; // Include navigation ?>
+        <?php require_once __DIR__ . '/nav.php';  ?>
     </header>
     <main>
