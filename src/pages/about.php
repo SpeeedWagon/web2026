@@ -11,8 +11,7 @@
            flex-shrink: 0;
         }
     </style>
-<h2 class="text-primary mb-3"><?php echo htmlspecialchars($pageTitle); ?></h2>
-<p>Aici avem informatii despre compania noastra</p>
+
   <div class="container mt-5">
         <h1 class="mb-4 text-center">Unde ne gasiti si o informatie despre noi</h1>
         <div class="d-flex justify-content-center align-items-center  gap-4 flex-container">

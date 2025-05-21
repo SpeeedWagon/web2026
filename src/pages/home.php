@@ -60,7 +60,7 @@
             <div class="col-md-4 mb-3">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body text-center">
-                         <img src="../media/svgs/cloud-server.svg" alt="Cloud Storage Icon" width="64" height="64" class="mb-3"> <!-- Placeholder SVG -->
+                         <img src="../media/svgs/cloud-upload.svg" alt="Cloud Storage Icon" width="64" height="64" class="mb-3"> <!-- Placeholder SVG -->
                         <h5 class="card-title">Stocare Cloud Securizată</h5>
                         <p class="card-text">Păstrați-vă datele în siguranță în cloud-ul nostru criptat, cu backup-uri automate și redundanță.</p>
                     </div>
@@ -69,7 +69,7 @@
             <div class="col-md-4 mb-3">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body text-center">
-                        <img src="../media/svgs/shield-lock.svg" alt="Data Backup Icon" width="64" height="64" class="mb-3"> <!-- Placeholder SVG -->
+                        <img src="../media/svgs/database.svg" alt="Data Backup Icon" width="64" height="64" class="mb-3"> <!-- Placeholder SVG -->
                         <h5 class="card-title">Backup și Recuperare Date</h5>
                         <p class="card-text">Soluții complete de backup pentru a preveni pierderea datelor și a asigura continuitatea afacerii.</p>
                     </div>
@@ -78,7 +78,7 @@
             <div class="col-md-4 mb-3">
                 <div class="card h-100 shadow-sm">
                      <div class="card-body text-center">
-                        <img src="../media/svgs/data-management.svg" alt="Data Management Icon" width="64" height="64" class="mb-3"> <!-- Placeholder SVG -->
+                        <img src="../media/svgs/activity.svg" alt="Data Management Icon" width="64" height="64" class="mb-3"> <!-- Placeholder SVG -->
                         <h5 class="card-title">Management Inteligent al Datelor</h5>
                         <p class="card-text">Organizați și gestionați eficient volume mari de date cu instrumentele noastre intuitive.</p>
                     </div>
