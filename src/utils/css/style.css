@@ -16,35 +16,48 @@
 	object-fit: cover;
 	vertical-align: middle;
 }
-.navbar-avatar {
-	width: 30px; /* Adjust size as needed */
-	height: 30px;
-	border-radius: 50%; /* Make it circular */
-	object-fit: cover; /* Scale image nicely */
-	vertical-align: middle;
-	border: 1px solid rgba(255, 255, 255, 0.6); /* Optional subtle border for dark backgrounds */
+.navbar-brand .brand-name {
+    font-size: 1.35rem; /* Adjust size as needed */
+    font-weight: 600; /* Make it a bit bolder */
+    letter-spacing: 0.5px; /* Optional: slightly more spacing */
+    color: #fff; /* Ensure it's white like other navbar-dark text */
 }
-/* Ensure items align vertically in the navbar */
-.navbar .nav-item {
-	display: flex;
-	align-items: center;
+
+.navbar-nav .avatar {
+    width: 40px; /* Consistent size */
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.25); /* Optional: subtle border */
+    transition: transform 0.2s ease-in-out;
 }
-/* Add some spacing between nav items */
-.navbar-nav > .nav-item {
-	margin-left: 0.5rem;
-	margin-right: 0.5rem;
+
+.navbar-nav .avatar:hover {
+    transform: scale(1.1); /* Slight zoom on hover for avatar */
 }
-.navbar-nav > .nav-item:first-child {
-	margin-left: 0;
+
+/* Enhance nav link appearance */
+.navbar-dark .navbar-nav .nav-link.fs-5 {
+    padding-left: 0.75rem;  /* Add a bit more horizontal padding */
+    padding-right: 0.75rem;
+    border-radius: 0.3rem; /* Rounded corners for hover/active */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
-.navbar-nav > .nav-item:last-child {
-	margin-right: 0;
+
+.navbar-dark .navbar-nav .nav-link.fs-5:hover,
+.navbar-dark .navbar-nav .nav-link.fs-5:focus {
+    background-color: rgba(255, 255, 255, 0.1); /* Subtle background on hover/focus */
+    color: #ffffff; /* Ensure text remains bright white */
 }
-/* Style for the non-link welcome text */
-.navbar-text-custom {
-	color: rgba(255, 255, 255, 0.85); /* Lighter text color for dark navbar */
-	padding-top: 0.5rem; /* Align with nav-link padding */
-	padding-bottom: 0.5rem; /* Align with nav-link padding */
+
+/* Example for active link - you'd need to add 'active' class via PHP based on current page */
+.navbar-dark .navbar-nav .nav-link.fs-5.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    font-weight: 500;
+}
+
+.navbar-text.fs-5 {
+    padding-right: 0.5rem; /* Ensure welcome text doesn't crowd avatar */
 }
 .board {
 	display: grid;

@@ -245,7 +245,6 @@ if (!empty($contentFile) && file_exists($contentFile)) {
 }
 
 
-require_once 'templates/footer.php';
 ?>
 
 <!DOCTYPE html>
