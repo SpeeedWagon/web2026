@@ -12,15 +12,9 @@
         }
     </style>
 <h2 class="text-primary mb-3"><?php echo htmlspecialchars($pageTitle); ?></h2>
-<p>This page contains information about our awesome project.</p>
-
-<div class="container mt-5">
-        <h1 class="mb-4 text-center">White House Map & Video</h1>
-
-        <!-- Flex container to hold items side-by-side -->
-        <!-- justify-content-center: centers the items horizontally within the container -->
-        <!-- gap-4: Adds space between the flex items (Bootstrap spacing utility) -->
-        <!-- flex-wrap: Allows items to wrap on smaller screens if needed -->
+<p>Aici avem informatii despre compania noastra</p>
+  <div class="container mt-5">
+        <h1 class="mb-4 text-center">Unde ne gasiti si o informatie despre noi</h1>
         <div class="d-flex justify-content-center align-items-center  gap-4 flex-container">
 
             <!-- Google Map Embed -->
@@ -40,7 +34,7 @@
 
     </div> <!-- End Bootstrap Container -->
     <div class="container mt-5">
-        <h1 class="mb-4 text-center">White House Map & Video</h1>
+        <h1 class="mb-4 text-center">Cum te folosesti de platforma noastra</h1>
 
         <!-- Flex container to hold items side-by-side -->
         <!-- justify-content-center: centers the items horizontally within the container -->
@@ -63,36 +57,6 @@
           <source src="../media/audio/audio1.mp3">
         </audio>
         <img class="audio-player__cover" src="../media/images/img1.png">
-        <video preload="auto" loop>
-          <source src="https://dl.dropboxusercontent.com/u/5185018/audio-waves.mp4" type="video/mp4">
-        </video>
-      </div>
-    </li>
-    <li>
-      <div class="audio-player js-audio-player">
-        <button class="audio-player__control js-control">
-          <div class="audio-player__control-icon"></div>
-        </button>
-        <h3 class="audio-player__title">Audio Clip Two</h3>
-        <audio preload="auto">
-          <source src="http://pd.npr.org/anon.npr-mp3/npr/ama/2016/06/20160607_ama_bandbonus.mp3">
-        </audio>
-        <img class="audio-player__cover" src="https://unsplash.it/g/300/?image=48">
-        <video preload="auto" loop>
-          <source src="https://dl.dropboxusercontent.com/u/5185018/audio-waves.mp4" type="video/mp4">
-        </video>
-      </div>
-    </li>
-    <li>
-      <div class="audio-player js-audio-player">
-        <button class="audio-player__control js-control">
-          <div class="audio-player__control-icon"></div>
-        </button>
-        <h3 class="audio-player__title">Audio Clip Three</h3>
-        <audio preload="auto">
-          <source src="http://pd.npr.org/anon.npr-mp3/npr/pchh/2016/08/20160801_pchh_mtv.mp3">
-        </audio>
-        <img class="audio-player__cover" src="https://unsplash.it/g/300/?image=43">
         <video preload="auto" loop>
           <source src="https://dl.dropboxusercontent.com/u/5185018/audio-waves.mp4" type="video/mp4">
         </video>

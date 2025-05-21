@@ -1,21 +1,16 @@
 <?php
-// Ensure session is started (redundant if done in main index.php, but safe)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// --- Authentication Check --- (Should ideally be done *before* including the file in index.php)
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['login_error'] = 'Please log in to manage your comments.';
-    // Consider redirecting from the main index.php logic instead of here
-    // header('Location: index.php?page=login');
+    
     echo '<div class="alert alert-danger">Access denied. Please log in.</div>'; // Fallback message
     exit;
 }
 
-// Assume $pdo is available
 
-// --- Initialize variables ---
 $addCommentError = '';
 $deleteCommentError = '';
 $statusMessage = '';
@@ -142,10 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
-} // --- End of POST processing ---
+} 
 
 
-// --- Fetch User's Comments for Display ---
 try {
     $sql = "SELECT id, content, created_at FROM comments WHERE user_id = :user_id ORDER BY created_at DESC";
     $stmt = $pdo->prepare($sql);
@@ -158,10 +152,8 @@ try {
 
 ?>
 
-<!-- Page Content Starts -->
 <h1 class="text-primary mb-4">Manage My Comments</h1>
 
-<!-- Display Status/Feedback Messages -->
 <?php if ($statusMessage): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <?= htmlspecialchars($statusMessage); ?>
@@ -206,7 +198,6 @@ try {
 </div>
 
 
-<!-- Display Existing Comments Card -->
 <div class="card shadow-sm">
     <div class="card-header">
         <h2 class="h5 mb-0">My Existing Comments</h2>
@@ -247,6 +238,5 @@ try {
         <?php else: ?>
             <p class="text-muted">You haven't written any comments yet.</p>
         <?php endif; ?>
-    </div> <!-- /card-body -->
-</div> <!-- /card -->
-<!-- End Page Content -->
+    </div>
+</div> 

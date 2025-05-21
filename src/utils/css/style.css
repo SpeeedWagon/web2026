@@ -282,3 +282,57 @@
     max-width: 300px;
     margin: 20px;
   }
+
+  body.page-home { /* Apply only to home page if desired, or use a wrapper div */
+    background-image: url('https://images.pexels.com/photos/325229/pexels-photo-325229.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'); /* Replace with your image path */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed; /* Optional: for parallax-like effect */
+    color: #333; /* Default text color, adjust if needed for readability */
+}
+
+.hero-section {
+  background-image: linear-gradient(
+        to bottom, /* Direction of the gradient */
+        rgba(150, 79, 79, 0.5) 0%,  /* Start color: semi-transparent black at the very top */
+        rgba(148, 87, 87, 0.5) 50%, /* Stays mostly opaque until halfway down (or adjust as needed) */
+        rgba(255, 255, 255, 0.5) 100%   /* End color: fully transparent at the very bottom */
+    );
+    /*background-color: rgba(148, 84, 84, 0.5);  Dark semi-transparent overlay */
+    /* Increased padding-top to push content down, or use min-height and flexbox */
+    padding-top: 8rem; /* Example: Increased from 6rem */
+    padding-bottom: 6rem;
+    color: white;
+    display: flex; /* Using flexbox for better vertical alignment if needed */
+    align-items: center; /* Vertically center content if hero has fixed height */
+    min-height: 70vh; /* Example: Make hero section take at least 70% of viewport height */
+}
+
+
+
+.social-icons a {
+    color: white; /* Icon color */
+    font-size: 1.5rem; /* Adjust icon size */
+    margin: 0 0.5rem; /* Spacing between icons */
+    transition: color 0.3s ease;
+}
+
+.social-icons a:hover {
+    color: #0d6efd; /* Bootstrap primary color for hover, or your brand color */
+}
+.content-section {
+    background-color: rgba(255, 255, 255, 0.9); /* Light semi-transparent overlay for content readability */
+    padding: 3rem 0;
+    border-radius: 0.5rem; /* Optional: rounded corners */
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Ensure alerts are still readable */
+.alert {
+    color: initial; /* Reset color if parent has changed it to white */
+}
+.alert a.alert-link {
+    /* Ensure link color is appropriate for the alert background */
+}

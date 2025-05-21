@@ -10,7 +10,8 @@ services:
       dockerfile: Dockerfile
     # Option 2: Use a pre-built image directly (Simpler if no custom extensions needed)
     # image: php:8.1-apache # Example using PHP 8.1 with Apache
-
+    env_file:
+      - .env
     container_name: my_php_app # Optional: Friendly name
     ports:
       - "7070:80" # Map Host Port 8080 to Container Port 80 (Apache's default)
@@ -27,10 +28,10 @@ services:
     container_name: my_mysql_db # Optional: Friendly name
     restart: always # Always restart the DB container if it stops
     environment:
-      MYSQL_ROOT_PASSWORD: your_strong_root_password # Set root password
-      MYSQL_DATABASE: my_app_db # Create a database named 'my_app_db'
-      MYSQL_USER: my_app_user # Create a user
-      MYSQL_PASSWORD: your_strong_user_password # Set the user's password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD} # Set root password
+      MYSQL_DATABASE: ${MYSQL_DATABASE} # Create a database named 'my_app_db'
+      MYSQL_USER:  ${MYSQL_USER} # Create a user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD} # Set the user's password
     volumes:
       - db_data:/var/lib/mysql # Persist MySQL data in a named volume
     networks:
