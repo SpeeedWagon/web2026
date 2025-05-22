@@ -4,6 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // 1. Authentication Check - Redirect immediately if not logged in
+// Already checked that it's set
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['login_error'] = 'Logativa va rog ca sa va vizualizati date.';
     // If 'login.php' is the page, then use that, otherwise your main index with login page
@@ -17,104 +18,37 @@ $deleteCommentError = '';
 $statusMessage = '';
 $fetchDbError = null; // Initialize as null or empty string
 $userComments = [];
-$currentUserId = $_SESSION['user_id']; // Already checked that it's set
-
+$currentUserId = $_SESSION['user_id']; 
 // 2. Process Status Messages from URL (after potential redirects)
-if (isset($_GET['status'])) {
-    switch ($_GET['status']) {
-        case 'comment_added':
-            $statusMessage = "Informatia adaugata cu succes.";
-            break;
-        case 'comment_deleted':
-            $statusMessage = "Informatia stearsa cu succes.";
-            break;
-        case 'comment_delete_error':
-            $deleteCommentError = "Nu a putut fi sters comentariul.";
-            break;
-        case 'comment_auth_error':
-            $deleteCommentError = "Eroare de autentificare la stergere."; // More specific
-            break;
-        case 'comment_add_error':
-            $addCommentError = "Nu a putut fi adaugat comentariul. Încercați din nou.";
-            break;
-        case 'comment_not_found':
-            $deleteCommentError = "Comentariul nu a fost gasit.";
-            break;
-        case 'comment_delete_failed':
-            $deleteCommentError = "Stergerea comentariului a esuat.";
-            break;
-        // Add more specific statuses as needed
-    }
-}
+// if (isset($_GET['status'])) {
+//     switch ($_GET['status']) {
+//         case 'comment_added':
+//             $statusMessage = "Informatia adaugata cu succes.";
+//             break;
+//         case 'comment_deleted':
+//             $statusMessage = "Informatia stearsa cu succes.";
+//             break;
+//         case 'comment_delete_error':
+//             $deleteCommentError = "Nu a putut fi sters comentariul.";
+//             break;
+//         case 'comment_auth_error':
+//             $deleteCommentError = "Eroare de autentificare la stergere."; // More specific
+//             break;
+//         case 'comment_add_error':
+//             $addCommentError = "Nu a putut fi adaugat comentariul. Încercați din nou.";
+//             break;
+//         case 'comment_not_found':
+//             $deleteCommentError = "Comentariul nu a fost gasit.";
+//             break;
+//         case 'comment_delete_failed':
+//             $deleteCommentError = "Stergerea comentariului a esuat.";
+//             break;
+//         // Add more specific statuses as needed
+//     }
+// }
 
 // 3. Handle POST Requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($pdo)) { // Ensure $pdo is available
-    if (isset($_POST['action']) && $_POST['action'] === 'add_comment') {
-        $content = trim($_POST['comment_content'] ?? '');
 
-        if (empty($content)) {
-            // It's better to handle empty content validation here rather than relying solely on 'required'
-            // and redirect back with an error if needed, or set $addCommentError directly if not redirecting
-            header('Location: index.php?page=dashboard&status=comment_add_empty'); // Example status
-            exit;
-        } else {
-            try {
-                $sql = "INSERT INTO comments (user_id, content) VALUES (:user_id, :content)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([':user_id' => $currentUserId, ':content' => $content]);
-                header('Location: index.php?page=dashboard&status=comment_added');
-                exit;
-            } catch (PDOException $e) {
-                error_log("Error adding comment for user {$currentUserId}: " . $e->getMessage());
-                header('Location: index.php?page=dashboard&status=comment_add_error');
-                exit;
-            }
-        }
-    } elseif (isset($_POST['action']) && $_POST['action'] === 'delete_comment') {
-        $commentIdToDelete = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
-
-        if (!$commentIdToDelete || $commentIdToDelete <= 0) {
-            header('Location: index.php?page=dashboard&status=comment_invalid_id');
-            exit;
-        } else {
-            try {
-                // Check if comment exists and belongs to the user
-                $authSql = "SELECT user_id FROM comments WHERE id = :comment_id";
-                $authStmt = $pdo->prepare($authSql);
-                $authStmt->execute([':comment_id' => $commentIdToDelete]);
-                $commentOwner = $authStmt->fetchColumn();
-
-                if ($commentOwner === false) {
-                    header('Location: index.php?page=dashboard&status=comment_not_found');
-                    exit;
-                } elseif ($commentOwner != $currentUserId) {
-                    error_log("Auth failed: User {$currentUserId} attempting to delete comment {$commentIdToDelete} owned by {$commentOwner}");
-                    header('Location: index.php?page=dashboard&status=comment_auth_error');
-                    exit;
-                } else {
-                    // Proceed with deletion
-                    $deleteSql = "DELETE FROM comments WHERE id = :comment_id AND user_id = :user_id";
-                    $deleteStmt = $pdo->prepare($deleteSql);
-                    $deleteStmt->execute([':comment_id' => $commentIdToDelete, ':user_id' => $currentUserId]);
-
-                    if ($deleteStmt->rowCount() > 0) {
-                        header('Location: index.php?page=dashboard&status=comment_deleted');
-                        exit;
-                    } else {
-                        // This case implies the comment existed but wasn't deleted (e.g., race condition or already deleted)
-                        // Or, if the user_id check in WHERE clause failed, which shouldn't happen if auth check passed.
-                        header('Location: index.php?page=dashboard&status=comment_delete_failed');
-                        exit;
-                    }
-                }
-            } catch (PDOException $e) {
-                error_log("Error deleting comment {$commentIdToDelete} for user {$currentUserId}: " . $e->getMessage());
-                header('Location: index.php?page=dashboard&status=comment_delete_error'); // General DB error on delete
-                exit;
-            }
-        }
-    }
-}
 
 // 4. Fetch User Comments (after all POST processing and redirects are done)
 if (isset($pdo)) { // Ensure $pdo is available

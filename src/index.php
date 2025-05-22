@@ -132,7 +132,89 @@ if ($page === 'logout') {
     header('Location: index.php?page=login'); // Redirect to login page
     exit; // Stop script execution
 
-} elseif ($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+}elseif($page == 'dashboard' && $_SERVER['REQUEST_METHOD'] === 'POST'  && isset($pdo)){
+    if (!isset($_SESSION['user_id'])) {
+    $_SESSION['login_error'] = 'Logativa va rog ca sa va vizualizati date.';
+    // If 'login.php' is the page, then use that, otherwise your main index with login page
+    header('Location: index.php?page=login'); // Or wherever your login page is
+    exit;
+}
+
+// Initialize variables
+$addCommentError = '';
+$deleteCommentError = '';
+$statusMessage = '';
+$fetchDbError = null; // Initialize as null or empty string
+$userComments = [];
+$currentUserId = $_SESSION['user_id']; 
+    if (isset($_POST['action']) && $_POST['action'] === 'add_comment') {
+        $content = trim($_POST['comment_content'] ?? '');
+
+        if (empty($content)) {
+            // It's better to handle empty content validation here rather than relying solely on 'required'
+            // and redirect back with an error if needed, or set $addCommentError directly if not redirecting
+            header('Location: index.php?page=dashboard&status=comment_add_empty'); // Example status
+            exit;
+        } else {
+            try {
+                $sql = "INSERT INTO comments (user_id, content) VALUES (:user_id, :content)";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([':user_id' => $currentUserId, ':content' => $content]);
+                header('Location: index.php?page=dashboard&status=comment_added');
+                exit;
+            } catch (PDOException $e) {
+                error_log("Error adding comment for user {$currentUserId}: " . $e->getMessage());
+                header('Location: index.php?page=dashboard&status=comment_add_error');
+                exit;
+            }
+        }
+    } elseif (isset($_POST['action']) && $_POST['action'] === 'delete_comment') {
+        $commentIdToDelete = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
+
+        if (!$commentIdToDelete || $commentIdToDelete <= 0) {
+            header('Location: index.php?page=dashboard&status=comment_invalid_id');
+            exit;
+        } else {
+            try {
+                // Check if comment exists and belongs to the user
+                $authSql = "SELECT user_id FROM comments WHERE id = :comment_id";
+                $authStmt = $pdo->prepare($authSql);
+                $authStmt->execute([':comment_id' => $commentIdToDelete]);
+                $commentOwner = $authStmt->fetchColumn();
+
+                if ($commentOwner === false) {
+                    header('Location: index.php?page=dashboard&status=comment_not_found');
+                    exit;
+                } elseif ($commentOwner != $currentUserId) {
+                    error_log("Auth failed: User {$currentUserId} attempting to delete comment {$commentIdToDelete} owned by {$commentOwner}");
+                    header('Location: index.php?page=dashboard&status=comment_auth_error');
+                    exit;
+                } else {
+                    // Proceed with deletion
+                    $deleteSql = "DELETE FROM comments WHERE id = :comment_id AND user_id = :user_id";
+                    $deleteStmt = $pdo->prepare($deleteSql);
+                    $deleteStmt->execute([':comment_id' => $commentIdToDelete, ':user_id' => $currentUserId]);
+
+                    if ($deleteStmt->rowCount() > 0) {
+                        header('Location: index.php?page=dashboard&status=comment_deleted');
+                        exit;
+                    } else {
+                        // This case implies the comment existed but wasn't deleted (e.g., race condition or already deleted)
+                        // Or, if the user_id check in WHERE clause failed, which shouldn't happen if auth check passed.
+                        header('Location: index.php?page=dashboard&status=comment_delete_failed');
+                        exit;
+                    }
+                }
+            } catch (PDOException $e) {
+                error_log("Error deleting comment {$commentIdToDelete} for user {$currentUserId}: " . $e->getMessage());
+                header('Location: index.php?page=dashboard&status=comment_delete_error'); // General DB error on delete
+                exit;
+            }
+        }
+    }
+}
+
+elseif ($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_nou = new Inregistrare(trim($_POST['username'] ?? ''), $_POST['password'] ?? '');
     $originalFileName = basename($_FILES['avatar_user_nou']['name']);
     $temporaryPath = $_FILES['avatar_user_nou']['tmp_name'];

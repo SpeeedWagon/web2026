@@ -45,23 +45,15 @@
         </div> <!-- End Flex Container -->
 
     </div> <!-- End Bootstrap Container -->
-    <ul class="audio-players">
+    <ul >
     <li>
-      <div class="audio-player js-audio-player">
-        <button class="audio-player__control js-control">
-          <div class="audio-player__control-icon"></div>
-        </button>
-        <h4 class="audio-player__title"></h4> <!-- Note: Title was empty in the Jade for the first item -->
-        <audio preload="auto">
-          <source src="../media/audio/audio1.mp3">
+     
+        <audio controls preload="auto">
+          <source src="../media/audio/aduio1.mp3">
         </audio>
-        <img class="audio-player__cover" src="../media/images/img1.png">
-        <video preload="auto" loop>
-          <source src="https://dl.dropboxusercontent.com/u/5185018/audio-waves.mp4" type="video/mp4">
-        </video>
+        
       </div>
     </li>
   </ul>
-  <script src="../utils/js/audio_playback.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-<!-- Add more Bootstrap-styled content here if needed -->
+ <audio src = "../media/audio/aduio1.mp3"></audio>
+  <!-- Add more Bootstrap-styled content here if needed -->

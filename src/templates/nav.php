@@ -29,7 +29,7 @@
                 ?>
 
                 <li class="nav-item me-2"> 
-                    <span class="navbar-text fs-5">Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>!</span>
+                    <span class="navbar-text fs-5">Bun venit, <?php echo htmlspecialchars($_SESSION['username']); ?>!</span>
                 </li>
                 <li class="nav-item me-3">
                     <img class="avatar" src="<?= htmlspecialchars($profile_image_path) ?>"
