@@ -53,8 +53,7 @@ services:
       - app-network    # Connect phpMyAdmin to the same network
     depends_on:         # Good practice to wait for db
       - db
-    # --- END OF ADDED LINES ---
-# Define the custom network
+
 networks:
   app-network:
     driver: bridge # Default network driver

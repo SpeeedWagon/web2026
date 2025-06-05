@@ -14,13 +14,15 @@
 
                 if ($name_id && isset($pdo)) {
                     try {
-                        $sql = "SELECT profile_image_path FROM users WHERE id = :id";
+                        $sql = "SELECT profile_image_path,admin FROM users WHERE id = :id";
                         $stmt = $pdo->prepare($sql);
                         $stmt->bindParam(':id', $name_id, PDO::PARAM_INT);
                         $stmt->execute();
                         $info = $stmt->fetch(PDO::FETCH_ASSOC);
                         if ($info && !empty($info["profile_image_path"])) {
                             $profile_image_path = $info["profile_image_path"];
+                            $is_admin = $info["admin"];
+                            $_SESSION["is_admin"] = $is_admin;
                         }
                     } catch (PDOException $e) {
                         error_log("PDOException in navbar: " . $e->getMessage());
@@ -44,6 +46,11 @@
                 <li class="nav-item me-2">
                     <a class="nav-link fs-5 <?php echo ($currentPage === 'dashboard' ? 'active' : ''); ?>" href="index.php?page=dashboard">Dashboard</a>
                 </li>
+                <?php if($is_admin==1): ?>
+                <li class="nav-item me-2">
+                    <a class="nav-link fs-5 <?php echo ($currentPage === 'admin' ? 'active' : ''); ?>" href="index.php?page=admin">Admin</a>
+                </li>
+                <?php endif; ?>
                 <li class="nav-item">
                     <a class="nav-link fs-5" href="index.php?page=logout">Logout</a>
                 </li>

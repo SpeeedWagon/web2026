@@ -71,7 +71,7 @@ $port = $site_data->getPort();
 
 
 try {
-    // Check if $pdo is already defined (e.g., included elsewhere)
+
     if (!isset($pdo)) {
         $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
         $options = [
@@ -89,24 +89,21 @@ try {
 require_once 'functions/auth_token_functions.php';
 
 
-$page = $_GET['page'] ?? 'home'; // Default page is 'home'
-$allowedPages = ['home', 'about', 'login', 'logout', 'register', 'dashboard']; // Whitelist allowed pages
+$page = $_GET['page'] ?? 'home';
+$allowedPages = ['home', 'about', 'login', 'logout', 'register', 'dashboard','admin'];
 
-// Variables for the views
-$pageTitle = 'Numele siteul meu'; // Default Title
-$contentFile = '';         // Path to the page content file
-$loginError = '';          // To display login errors on the login page
 
-// --- Handle Specific Actions (Logout, Login POST) ---
+$pageTitle = 'Numele siteul meu';
+$contentFile = '';         
+$loginError = '';          
 
 if (!isset($_SESSION['user_id'])) {
     loginWithRememberMeCookie($pdo);
 
 }
 if ($page === 'logout') {
-    // Clear session data
-    session_unset();    // Unset $_SESSION variable for the run-time
-    session_destroy();  // Destroy session data in storage
+    session_unset();   
+    session_destroy();  
     $userId = $_SESSION['user_id'] ?? null;
     if ($userId) {
         clearUserTokens($pdo, $userId);
@@ -114,7 +111,6 @@ if ($page === 'logout') {
     clearRememberMeCookie();
     $_SESSION = [];
 
-    // Optional: Clear the session cookie
     if (ini_get("session.use_cookies")) {
         $params = session_get_cookie_params();
         setcookie(
@@ -127,33 +123,75 @@ if ($page === 'logout') {
             $params["httponly"]
         );
     }
-    // session_destroy();
 
-    header('Location: index.php?page=login'); // Redirect to login page
-    exit; // Stop script execution
+    header('Location: index.php?page=login'); 
+    exit; 
 
-}elseif($page == 'dashboard' && $_SERVER['REQUEST_METHOD'] === 'POST'  && isset($pdo)){
+}elseif($page == 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST'  && isset($pdo))
+{
+    if (isset($_POST['action']) && $_POST['action'] === 'delete_comment_admin') {
+        $commentIdToDelete = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
+
+        if (!$commentIdToDelete || $commentIdToDelete <= 0) {
+            header('Location: index.php?page=admin&status=admin_delete_invalid_id');
+            exit;
+        }
+
+        try {
+            // Admin can delete any comment, so no user_id check in the WHERE clause for deletion itself.
+            // We might want to log which admin deleted it if you have an audit trail system.
+            $sql = "DELETE FROM comments WHERE id = :comment_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([':comment_id' => $commentIdToDelete]);
+
+            if ($stmt->rowCount() > 0) {
+                header('Location: index.php?page=admin&status=admin_comment_deleted_success');
+                exit;
+            } else {
+                // Comment might have been deleted by someone else already, or ID was wrong
+                header('Location: index.php?page=admin&status=admin_comment_not_found_or_delete_failed');
+                exit;
+            }
+        } catch (PDOException $e) {
+            error_log("Admin: Error deleting comment ID {$commentIdToDelete}: " . $e->getMessage());
+            header('Location: index.php?page=admin&status=admin_delete_error_db');
+            exit;
+        }
+    } else {
+        // If other admin POST actions are added, handle them here.
+        // For now, if no specific action matched, just redirect back to admin page.
+        header('Location: index.php?page=admin');
+        exit;
+    }
+    
+    header('Location: index.php?page=admin');
+}
+ elseif ($page === 'admin' && (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1)) {
+    // If trying to access admin page but not logged in as an admin, redirect to login
+    $_SESSION['login_error'] = 'You must be an admin to access this page.';
+    header('Location: index.php?page=home');
+    exit;
+}
+elseif($page == 'dashboard' && $_SERVER['REQUEST_METHOD'] === 'POST'  && isset($pdo)){
     if (!isset($_SESSION['user_id'])) {
     $_SESSION['login_error'] = 'Logativa va rog ca sa va vizualizati date.';
-    // If 'login.php' is the page, then use that, otherwise your main index with login page
-    header('Location: index.php?page=login'); // Or wherever your login page is
+    
+    header('Location: index.php?page=login');
     exit;
 }
 
-// Initialize variables
 $addCommentError = '';
 $deleteCommentError = '';
 $statusMessage = '';
-$fetchDbError = null; // Initialize as null or empty string
+$fetchDbError = null; 
 $userComments = [];
 $currentUserId = $_SESSION['user_id']; 
     if (isset($_POST['action']) && $_POST['action'] === 'add_comment') {
         $content = trim($_POST['comment_content'] ?? '');
 
         if (empty($content)) {
-            // It's better to handle empty content validation here rather than relying solely on 'required'
-            // and redirect back with an error if needed, or set $addCommentError directly if not redirecting
-            header('Location: index.php?page=dashboard&status=comment_add_empty'); // Example status
+            
+            header('Location: index.php?page=dashboard&status=comment_add_empty'); 
             exit;
         } else {
             try {
@@ -176,7 +214,6 @@ $currentUserId = $_SESSION['user_id'];
             exit;
         } else {
             try {
-                // Check if comment exists and belongs to the user
                 $authSql = "SELECT user_id FROM comments WHERE id = :comment_id";
                 $authStmt = $pdo->prepare($authSql);
                 $authStmt->execute([':comment_id' => $commentIdToDelete]);
@@ -199,15 +236,14 @@ $currentUserId = $_SESSION['user_id'];
                         header('Location: index.php?page=dashboard&status=comment_deleted');
                         exit;
                     } else {
-                        // This case implies the comment existed but wasn't deleted (e.g., race condition or already deleted)
-                        // Or, if the user_id check in WHERE clause failed, which shouldn't happen if auth check passed.
+                        
                         header('Location: index.php?page=dashboard&status=comment_delete_failed');
                         exit;
                     }
                 }
             } catch (PDOException $e) {
                 error_log("Error deleting comment {$commentIdToDelete} for user {$currentUserId}: " . $e->getMessage());
-                header('Location: index.php?page=dashboard&status=comment_delete_error'); // General DB error on delete
+                header('Location: index.php?page=dashboard&status=comment_delete_error'); 
                 exit;
             }
         }
@@ -222,6 +258,7 @@ elseif ($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     move_uploaded_file($temporaryPath, $destinationPath);
     if (empty($user_nou->getUserName()) || empty($user_nou->getPassword())) {
         $loginError = 'Nu a fost dat user sau parola';
+        echo "<script type='text/javascript'>alert('$loginError');</script>";
     } else {
         try {
             $stmt = $pdo->prepare($user_nou->getSql());
@@ -238,37 +275,35 @@ elseif ($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $page = 'login';
     }
 } elseif ($page === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    
     $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? ''; // Don't trim password input
-    $rememberMe = isset($_POST['remember_me']); // Check if the checkbox was checked
-    // $_SESSION[''];
+    $password = $_POST['password'] ?? '';
+    $rememberMe = isset($_POST['remember_me']); 
     $_SESSION['robot'] = true;
     if (empty($username) || empty($password)) {
-        $loginError = 'Username and Password are required.';
+        $loginError = 'Nu a fost dat user sau parola';
+        echo "<script type='text/javascript'>alert('$loginError');</script>";
     } else {
-        // Prepare statement to prevent SQL injection
-        // Replace 'users', 'username', 'id', 'password_hash' with your actual table/column names
         $stmt = $pdo->prepare("SELECT id, user_name ,  password_hash FROM users WHERE user_name = ?");
         try {
             $stmt->execute([$username]);
-            $user = $stmt->fetch(); // Fetch the user record
-            // Verify password using password_verify()
+            $user = $stmt->fetch(); 
+            
             if ($user && password_verify($password, $user['password_hash'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['user_name'];
                 if ($rememberMe) {
-                    // Create and store a new token, also sets the cookie
+
                     createRememberMeToken($pdo, $user['id']);
                 } else {
-                    // If not checked, ensure any old tokens for this user are removed
-                    // and any existing remember me cookie is cleared.
+                    
                     clearUserTokens($pdo, $user['id']);
                     clearRememberMeCookie();
                 }
-                header('Location: index.php?page=home'); // Redirect to home or dashboard
+                header('Location: index.php?page=home'); 
                 exit;
             } else {
-                // Invalid username or password
+                
                 $loginError = 'Invalid username or password.';
             }
         } catch (\PDOException $e) {
@@ -279,37 +314,38 @@ elseif ($page == 'register' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $page = 'login';
 }
 
-// --- Determine Page Content ---
 switch ($page) {
     case 'about':
-        $pageTitle = 'About Us';
+        $pageTitle = 'Despre noi';
         $contentFile = 'pages/about.php';
         break;
     case 'register':
-        $pageTitle = 'Regisiter';
+        $pageTitle = 'Inregistrare';
         $contentFile = 'pages/register.php';
         break;
     case 'dashboard':
-        $pageTitle = 'Dashboard';
-        $contentFile = 'pages/dashboard.php'; // Point to the new file
+        $pageTitle = 'Administrare date';
+        $contentFile = 'pages/dashboard.php';
+        break;
+    case 'admin':
+        $pageTitle = 'admin';
+        $contentFile = 'pages/admin.php';
         break;
     case 'login':
-        // If user is already logged in, redirect them away from login page
         if (isset($_SESSION['user_id'])) {
             header('Location: index.php?page=home');
             exit;
         }
-        $pageTitle = 'Login';
+        $pageTitle = 'Logare';
         $contentFile = 'pages/login.php';
-        // $loginError might have been set above during POST handling
         break;
 
     case 'home':
     default:
         if (!in_array($page, $allowedPages) && $page !== 'home') {
-            http_response_code(404); // Set HTTP status code to 404
+            http_response_code(404); 
             $pageTitle = 'Page Not Found';
-            $contentFile = 'pages/404.php'; // Assume you have a 404 content page
+            $contentFile = 'pages/404.php';
             error_log("404 Not Found: Tried to access non-existent page '{$page}'");
         } else {
             $pageTitle = 'Welcome Home';
@@ -321,8 +357,8 @@ switch ($page) {
 require_once 'templates/header.php';
 
 if (!empty($contentFile) && file_exists($contentFile)) {
-    include $contentFile; // Include the main content for the specific page
-} elseif ($page !== '404') { // Avoid error message if 404.php itself is missing
+    include $contentFile; 
+} elseif ($page !== '404') { 
     echo "<p>Eroare 404 nu poate fi gasita aceasta pagina pe site</p>";
 }
 

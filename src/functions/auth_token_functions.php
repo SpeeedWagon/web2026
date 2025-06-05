@@ -9,7 +9,6 @@ define('REMEMBER_ME_EXPIRY_SECONDS', 86400 * 30); // 30 days expiry
  */
 function createRememberMeToken(PDO $pdo, int $userId): void
 {
-    // Clear any old tokens for this user first for hygiene
     clearUserTokens($pdo, $userId);
 
     $selector = bin2hex(random_bytes(16)); // 32 chars hex
@@ -210,5 +209,3 @@ function clearUserTokens(PDO $pdo, int $userId): void
         error_log("Error clearing tokens for user {$userId}: " . $e->getMessage());
     }
 }
-
-?>

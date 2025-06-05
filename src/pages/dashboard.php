@@ -7,7 +7,6 @@ if (session_status() === PHP_SESSION_NONE) {
 // Already checked that it's set
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['login_error'] = 'Logativa va rog ca sa va vizualizati date.';
-    // If 'login.php' is the page, then use that, otherwise your main index with login page
     header('Location: index.php?page=login'); // Or wherever your login page is
     exit;
 }
