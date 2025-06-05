@@ -129,42 +129,90 @@ if ($page === 'logout') {
 
 }elseif($page == 'admin' && $_SERVER['REQUEST_METHOD'] === 'POST'  && isset($pdo))
 {
+    // Preserve search term for redirect
+    $redirectSearchTerm = isset($_POST['search_term_hidden']) ? trim($_POST['search_term_hidden']) : (isset($_GET['search_term']) ? trim($_GET['search_term']) : '');
+    $redirectQuery = !empty($redirectSearchTerm) ? '&search_term=' . urlencode($redirectSearchTerm) : '';
+
+
     if (isset($_POST['action']) && $_POST['action'] === 'delete_comment_admin') {
         $commentIdToDelete = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
 
         if (!$commentIdToDelete || $commentIdToDelete <= 0) {
-            header('Location: index.php?page=admin&status=admin_delete_invalid_id');
+            header('Location: index.php?page=admin&status=admin_delete_invalid_id' . $redirectQuery);
             exit;
         }
 
         try {
-            // Admin can delete any comment, so no user_id check in the WHERE clause for deletion itself.
-            // We might want to log which admin deleted it if you have an audit trail system.
             $sql = "DELETE FROM comments WHERE id = :comment_id";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([':comment_id' => $commentIdToDelete]);
 
             if ($stmt->rowCount() > 0) {
-                header('Location: index.php?page=admin&status=admin_comment_deleted_success');
+                header('Location: index.php?page=admin&status=admin_comment_deleted_success' . $redirectQuery);
                 exit;
             } else {
-                // Comment might have been deleted by someone else already, or ID was wrong
-                header('Location: index.php?page=admin&status=admin_comment_not_found_or_delete_failed');
+                header('Location: index.php?page=admin&status=admin_comment_not_found_or_delete_failed' . $redirectQuery);
                 exit;
             }
         } catch (PDOException $e) {
             error_log("Admin: Error deleting comment ID {$commentIdToDelete}: " . $e->getMessage());
-            header('Location: index.php?page=admin&status=admin_delete_error_db');
+            header('Location: index.php?page=admin&status=admin_delete_error_db' . $redirectQuery);
+            exit;
+        }
+    } elseif (isset($_POST['action']) && $_POST['action'] === 'update_comment_admin') { // <<-- NEW BLOCK
+        $commentIdToUpdate = filter_input(INPUT_POST, 'comment_id', FILTER_VALIDATE_INT);
+        $newContent = trim($_POST['comment_content'] ?? '');
+
+        if (!$commentIdToUpdate || $commentIdToUpdate <= 0) {
+            header('Location: index.php?page=admin&status=admin_update_invalid_id' . $redirectQuery);
+            exit;
+        }
+        if (empty($newContent)) {
+            header('Location: index.php?page=admin&status=admin_update_empty_content&comment_id_error=' . $commentIdToUpdate . $redirectQuery);
+            exit;
+        }
+
+        try {
+            // Check if comment exists before attempting update for better feedback
+            $checkSql = "SELECT id FROM comments WHERE id = :comment_id";
+            $checkStmt = $pdo->prepare($checkSql);
+            $checkStmt->execute([':comment_id' => $commentIdToUpdate]);
+            if (!$checkStmt->fetch()) {
+                header('Location: index.php?page=admin&status=admin_comment_not_found_for_update' . $redirectQuery);
+                exit;
+            }
+
+            $sql = "UPDATE comments SET content = :content, updated_at = NOW() WHERE id = :comment_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':content' => $newContent,
+                ':comment_id' => $commentIdToUpdate
+            ]);
+
+            if ($stmt->rowCount() > 0) {
+                header('Location: index.php?page=admin&status=admin_comment_updated_success' . $redirectQuery);
+                exit;
+            } else {
+                // rowCount might be 0 if the content was identical to the existing one.
+                // We already checked if the comment exists.
+                header('Location: index.php?page=admin&status=admin_comment_update_no_change' . $redirectQuery);
+                exit;
+            }
+        } catch (PDOException $e) {
+            error_log("Admin: Error updating comment ID {$commentIdToUpdate}: " . $e->getMessage());
+            header('Location: index.php?page=admin&status=admin_update_error_db' . $redirectQuery);
             exit;
         }
     } else {
         // If other admin POST actions are added, handle them here.
         // For now, if no specific action matched, just redirect back to admin page.
-        header('Location: index.php?page=admin');
+        header('Location: index.php?page=admin' . $redirectQuery);
         exit;
     }
     
-    header('Location: index.php?page=admin');
+    // This line might be unreachable if all actions lead to an exit, but good for fallback.
+    // header('Location: index.php?page=admin' . $redirectQuery); // Already handled by the final else
+    // exit;
 }
  elseif ($page === 'admin' && (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1)) {
     // If trying to access admin page but not logged in as an admin, redirect to login
